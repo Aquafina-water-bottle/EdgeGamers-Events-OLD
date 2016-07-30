@@ -1,0 +1,138 @@
+//#-p stonebrick 0 -print
+//215 17 -21
+
+DEFINE $SA$ x=206,y=4,z=-57,dx=49,dy=100,dz=39
+DEFINE $server$ minecraft:
+DEFINE $Name$ Diamond
+DEFINE $Style$ 0 10 14
+
+DEFINE Deactivate fill |0| stonebrick 0
+DEFINE Activate fill |0| redstone_block 0
+
+//Race Status Number
+DEFINE $RSn$ 11
+//Warp name
+DEFINE $WN$ dr
+//Scoreboard teams color
+DEFINE $Color$ aqua
+//Place where air is when open
+DEFINE $Dao$ 224 16 -34 230 16 -40
+//Place where redstone blocks are there when open
+DEFINE $Dro$ 224 14 -38 230 14 -36
+//Spawn Coords
+DEFINE $SC$ 218 18 -37 -90 0
+//Where laps are completed
+DEFINE $lap$ x=224,y=18,z=-42,dx=6,dy=10,dz=1
+//Area where laps are reset
+DEFINE $lapAF$ x=249,y=4,z=-28,dx=1,dy=15,dz=6
+//Area where laps are disabled in spawn
+DEFINE $lapSP$ x=214,y=16,z=-38,dx=16,dy=5,dz=3
+
+:MainStart PULSE $Style$
+Deactivate(MainStart)
+//Scoreboard
+scoreboard objectives add $Name$Race dummy $Name$ Race
+scoreboard objectives setdisplay sidebar $Name$Race
+scoreboard teams add $Name$R
+scoreboard teams option $Name$R color $Color$
+scoreboard teams option $Name$R seeFriendlyInvisibles true
+scoreboard teams option $Name$R collisionRule never
+
+//Race Status
+$Name$R_Open RS = $RSn$
+scoreboard players reset $Name$R_Closed RS
+
+//Countdown startup
+summon AreaEffectCloud ~ ~ ~ {Duration:101,Tags:["$Name$RaceCD"]}
+tellraw @a[$SA$] {"text":"5","color":"yellow","bold":"true"}
+@a[$SA$] playsound block.note.pling voice @a[c=1] ~ ~ ~ 0.5
+
+//Other
+effect @a[$SA$] clear
+\/warp_$WN$ $Name$Race = 99
+@e[type=ArmorStand,$Name$RPOS] $Name$RaceCalc + 0
+//scoreboard teams join gray /warp_$WN$
+Activate(MainClock)
+Activate(Countdown)
+
+
+:MainClock CLOCK $Style$
+$server$weather clear 1000000
+gamemode 2 @a[$SA$,m=0]
+$server$clear @a[$SA$,m=2]
+scoreboard teams join $Name$R @a[$SA$,team=!$Name$R]
+@a[$SA$,m=2,team=$Name$R] $Name$Race + 0
+effect @a[$SA$,m=2,team=$Name$R] 14 3 0 true
+
+scoreboard players tag @a[$lapSP$,m=2,team=$Name$R,$Name$Race>=0,!$Name$Lap] add $Name$Lap
+@a[$lap$,m=2,team=$Name$R,$Name$Race>=0,!$Name$Lap] $Name$Race + 1
+@a[$lap$,m=2,team=$Name$R,$Name$Race>=1,!$Name$Lap] tellraw @a[$SA$] {"text":"","extra":[{"selector":"@a[c=1,r=0,m=2,team=$Name$R,$Name$Race>=1,!$Name$Lap]"},{"text":" has finished a lap!","color":"yellow"}]}
+@a[$lap$,m=2,team=$Name$R,$Name$Race>=1,!$Name$Lap] playsound minecraft:entity.experience_orb.touch voice @a
+scoreboard players tag @a[$lap$,m=2,team=$Name$R,$Name$Race>=0,!$Name$Lap] add $Name$Lap
+scoreboard players tag @a[$lapAF$,m=2,team=$Name$R,$Name$Race>=0,$Name$Lap] remove $Name$Lap
+
+
+:Countdown CLOCK $Style$
+testfor @e[type=AreaEffectCloud,$Name$RaceCD] {Age:20}
+CONSTART
+	@a[$SA$] playsound minecraft:block.note.pling voice @a[c=1] ~ ~ ~ 1
+	tellraw @a[$SA$] {"text":"4","color":"yellow","bold":"true"}
+CONEND
+testfor @e[type=AreaEffectCloud,$Name$RaceCD] {Age:40}
+CONSTART
+	@a[$SA$] playsound minecraft:block.note.pling voice @a[c=1] ~ ~ ~ 1.5
+	tellraw @a[$SA$] {"text":"3","color":"yellow","bold":"true"}
+CONEND
+testfor @e[type=AreaEffectCloud,$Name$RaceCD] {Age:60}
+CONSTART
+	@a[$SA$] playsound minecraft:block.note.pling voice @a[c=1] ~ ~ ~ 2
+	tellraw @a[$SA$] {"text":"2","color":"yellow","bold":"true"}
+CONEND
+testfor @e[type=AreaEffectCloud,$Name$RaceCD] {Age:80}
+CONSTART
+	@a[$SA$] playsound minecraft:block.note.pling voice @a[c=1] ~ ~ ~ 2
+	tellraw @a[$SA$] {"text":"1","color":"yellow","bold":"true"}
+CONEND
+testfor @e[type=AreaEffectCloud,$Name$RaceCD] {Age:100}
+CONSTART
+	@a[$SA$] playsound minecraft:entity.wither.death voice @a[c=1]
+	tellraw @a[$SA$] {"text":"GO!","color":"green","bold":"true"}
+	title @a[$SA$] title {"text":"GO!","color":"green"}
+	fill $Dao$ stonebrick 0 replace redstone_block 0
+	fill $Dro$ redstone_block 0 replace stonebrick 0
+	fill 222 17 -38 223 17 -36 stonebrick 0
+	Deactivate(Countdown)
+CONEND
+
+
+:MainEnd PULSE $Style$
+Deactivate(MainEnd)
+scoreboard objectives remove $Name$Race
+scoreboard teams remove $Name$R
+scoreboard players tag * remove $Name$Lap
+
+Deactivate(MainClock)
+Deactivate(Countdown)
+
+$Name$R_Closed RS = $RSn$
+scoreboard players reset $Name$R_Open RS
+
+$server$kill @e[type=AreaEffectCloud,$Name$RaceCD]
+fill $Dao$ redstone_block 0 replace stonebrick 0
+fill $Dro$ stonebrick 0 replace redstone_block 0
+clone 211 19 -41 212 19 -39 222 17 -38
+
+effect @a[$SA$,m=2] clear
+$server$clear @a[$SA$,m=2]
+effect @a[$SA$,m=2] 6 20 100 true
+$server$tp @a[$SA$,m=2] $SC$
+
+
+
+
+
+
+
+
+
+

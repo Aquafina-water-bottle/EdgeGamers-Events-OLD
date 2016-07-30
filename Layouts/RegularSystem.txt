@@ -1,0 +1,121 @@
+//#-p stonebrick 0 -print
+
+
+DEFINE $SA$ 
+DEFINE $server$ minecraft:
+DEFINE $Name$ 
+DEFINE $Style$ 0 10 10
+
+DEFINE Deactivate fill |0| stonebrick 0
+DEFINE Activate fill |0| redstone_block 0
+
+//Race Status Number
+DEFINE $RSn$ 
+//Warp name
+DEFINE $WN$ 
+//Scoreboard teams color
+DEFINE $Color$ 
+//Place where air is when open
+DEFINE $Dao$ 
+//Place where redstone blocks are there when open
+DEFINE $Dro$ 
+//Spawn Coords
+DEFINE $SC$ 
+
+:MainStart PULSE $Style$
+Deactivate(MainStart)
+//Scoreboard
+scoreboard objectives add $Name$Race dummy $Name$ Race
+scoreboard objectives setdisplay sidebar $Name$Race
+scoreboard teams add $Name$R
+scoreboard teams option $Name$R color $Color$
+scoreboard teams option $Name$R seeFriendlyInvisibles true
+scoreboard teams option $Name$R collisionRule never
+
+//Race Status
+$Name$R_Open RS = $RSn$
+scoreboard players reset $Name$R_Closed RS
+
+//Countdown startup
+summon AreaEffectCloud ~ ~ ~ {Duration:101,Tags:["$Name$RaceCD"]}
+tellraw @a[$SA$] {"text":"5","color":"yellow","bold":"true"}
+@a[$SA$] playsound block.note.pling voice @a[c=1] ~ ~ ~ 0.5
+
+//Other
+effect @a[$SA$] clear
+\/warp_$WN$ $Name$Race = 0
+scoreboard teams join $Name$R /warp_$WN$
+Activate(MainClock)
+Activate(Countdown)
+
+
+:MainClock CLOCK $Style$
+$server$weather clear 1000000
+gamemode 2 @a[$SA$,m=0]
+$server$clear @a[$SA$,m=2]
+scoreboard teams join $Name$R @a[$SA$,team=!$Name$R]
+effect @a[$SA$,m=2,team=$Name$R] 14 3 0 true
+
+
+
+:Countdown CLOCK $Style$
+testfor @e[type=AreaEffectCloud,$Name$RaceCD] {Age:20}
+CONSTART
+	@a[$SA$] playsound minecraft:block.note.pling voice @a[c=1] ~ ~ ~ 1
+	tellraw @a[$SA$] {"text":"4","color":"yellow","bold":"true"}
+CONEND
+testfor @e[type=AreaEffectCloud,$Name$RaceCD] {Age:40}
+CONSTART
+	@a[$SA$] playsound minecraft:block.note.pling voice @a[c=1] ~ ~ ~ 1.5
+	tellraw @a[$SA$] {"text":"3","color":"yellow","bold":"true"}
+CONEND
+testfor @e[type=AreaEffectCloud,$Name$RaceCD] {Age:60}
+CONSTART
+	@a[$SA$] playsound minecraft:block.note.pling voice @a[c=1] ~ ~ ~ 2
+	tellraw @a[$SA$] {"text":"2","color":"yellow","bold":"true"}
+CONEND
+testfor @e[type=AreaEffectCloud,$Name$RaceCD] {Age:80}
+CONSTART
+	@a[$SA$] playsound minecraft:block.note.pling voice @a[c=1] ~ ~ ~ 2
+	tellraw @a[$SA$] {"text":"1","color":"yellow","bold":"true"}
+CONEND
+testfor @e[type=AreaEffectCloud,$Name$RaceCD] {Age:100}
+CONSTART
+	@a[$SA$] playsound minecraft:entity.wither.death voice @a[c=1]
+	tellraw @a[$SA$] {"text":"GO!","color":"green","bold":"true"}
+	title @a[$SA$] title {"text":"GO!","color":"green"}
+	fill $Dao$ stonebrick 0 replace redstone_block 0
+	fill $Dro$ redstone_block 0 replace stonebrick 0
+	Deactivate(Countdown)
+CONEND
+
+
+:MainEnd PULSE $Style$
+Deactivate(MainEnd)
+scoreboard objectives remove $Name$Race
+scoreboard teams remove $Name$R
+
+Deactivate(MainClock)
+Deactivate(Countdown)
+
+$Name$R_Closed RS = $RSn$
+scoreboard players reset $Name$R_Open RS
+
+$server$kill @e[type=AreaEffectCloud,$Name$RaceCD]
+fill $Dao$ redstone_block 0 replace stonebrick 0
+fill $Dro$ stonebrick 0 replace redstone_block 0
+
+effect @a[$SA$,m=2] clear
+$server$clear @a[$SA$,m=2]
+effect @a[$SA$,m=2] 6 20 100 true
+$server$tp @a[$SA$,m=2] $SC$
+
+
+
+
+
+
+
+
+
+
